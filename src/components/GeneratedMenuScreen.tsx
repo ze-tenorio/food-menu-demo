@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { MenuPlan } from '../services/menuApi';
+import CsatModal from './CsatModal';
+import { submitCsatEvaluation, isPlanEvaluated } from '../services/csatApi';
 
 interface GeneratedMenuScreenProps {
   onClose: () => void;
@@ -8,6 +10,7 @@ interface GeneratedMenuScreenProps {
   onViewMenus: () => void;
   objective?: string;
   menuData?: MenuPlan | null;
+  isNewlyGenerated?: boolean; // Indica se o menu acabou de ser gerado
 }
 
 const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({ 
@@ -15,8 +18,45 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
   onBack, 
   onViewMenus,
   objective,
-  menuData: apiMenuData
+  menuData: apiMenuData,
+  isNewlyGenerated = false
 }) => {
+  const [showCsatModal, setShowCsatModal] = useState(false);
+  const [csatDismissed, setCsatDismissed] = useState(false);
+
+  // Mostrar modal CSAT após alguns segundos de visualização do menu recém-gerado
+  useEffect(() => {
+    // Só mostrar para menus recém-gerados que ainda não foram avaliados
+    if (!isNewlyGenerated || csatDismissed) return;
+    
+    const planId = apiMenuData?.plan_id;
+    if (planId && isPlanEvaluated(planId)) return;
+
+    // Aguardar 8 segundos para o usuário visualizar o menu antes de pedir feedback
+    const timer = setTimeout(() => {
+      setShowCsatModal(true);
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [isNewlyGenerated, apiMenuData?.plan_id, csatDismissed]);
+
+  const handleCsatClose = () => {
+    setShowCsatModal(false);
+    setCsatDismissed(true);
+  };
+
+  const handleCsatSubmit = async (rating: number, feedback: string) => {
+    const planId = apiMenuData?.plan_id || '';
+    // Usar patient_id do menu ou CPF salvo no sessionStorage
+    const patientId = apiMenuData?.patient_id || apiMenuData?.user_id || sessionStorage.getItem('userCpf') || '';
+    
+    if (!planId || !patientId) {
+      console.error('[CSAT] Dados obrigatórios faltando:', { planId, patientId });
+      return;
+    }
+    
+    await submitCsatEvaluation(planId, rating, feedback, patientId);
+  };
   // Função para obter a ordem de uma refeição
   const getMealOrder = (meal: any): number => {
     // Pega type ou name e converte para lowercase, remove acentos
@@ -385,14 +425,27 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
 
           {/* Nutritionist Info - sempre exibir */}
           {hasApiData && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-5 mb-6">
-            <p className="text-gray-700 text-sm leading-relaxed text-center">
-              A partir do plano <strong>TP3</strong> é possível fazer um acompanhamento com um profissional de nutrição da <strong>Starbem</strong> para te ajudar a alcançar seus objetivos de forma personalizada e eficaz.
+          <div className="mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+              <p className="text-gray-700 text-sm leading-relaxed text-center">
+                A partir do plano <strong>TP3</strong> é possível fazer um acompanhamento com um profissional de nutrição da <strong>Starbem</strong> para te ajudar a alcançar seus objetivos de forma personalizada e eficaz.*
+              </p>
+            </div>
+            <p className="text-gray-400 text-[10px] leading-tight mt-2 text-center px-2">
+              * Disponibilidade sujeita à contratação pelo RH. O serviço pode não estar disponível para todos os usuários.
             </p>
           </div>
           )}
         </div>
       </div>
+
+      {/* CSAT Modal */}
+      <CsatModal
+        isOpen={showCsatModal}
+        onClose={handleCsatClose}
+        onSubmit={handleCsatSubmit}
+        planId={apiMenuData?.plan_id}
+      />
     </div>
   );
 };

@@ -28,6 +28,7 @@ const App = () => {
   const [showGeneratedMenu, setShowGeneratedMenu] = useState(false);
   const [showMenusList, setShowMenusList] = useState(false);
   const [hasCreatedMenu, setHasCreatedMenu] = useState(false);
+  const [isMenuNewlyGenerated, setIsMenuNewlyGenerated] = useState(false);
   const [userCpf, setUserCpf] = useState<string>(getSavedCpf());
   const [historicalMenus, setHistoricalMenus] = useState<MenuSummary[]>([]);
   const [createdMenus, setCreatedMenus] = useState<Array<{
@@ -163,6 +164,7 @@ const App = () => {
     setShowMenuLoading(false);
     setShowGeneratedMenu(true);
     setHasCreatedMenu(true);
+    setIsMenuNewlyGenerated(true); // Marca como recém-gerado para mostrar CSAT
     
     // Adicionar menu à lista
     const objective = formData?.nutritional_plan_goals?.primary_objective || 'manutencao';
@@ -269,6 +271,7 @@ const App = () => {
       });
       setCurrentMenu(localMenu.menuData || null);
       setShowMenusList(false);
+      setIsMenuNewlyGenerated(false); // Não é recém-gerado, está visualizando histórico
       setShowGeneratedMenu(true);
       return;
     }
@@ -301,6 +304,7 @@ const App = () => {
         
         setCurrentMenu(result.plan);
         setShowMenuLoading(false);
+        setIsMenuNewlyGenerated(false); // Carregando do histórico, não é recém-gerado
         setShowGeneratedMenu(true);
       } else {
         alert('Erro ao carregar menu: ' + (result.error || 'Erro desconhecido'));
@@ -426,6 +430,7 @@ const App = () => {
         onViewMenus={handleViewMenus} 
         objective={currentObjective}
         menuData={currentMenu}
+        isNewlyGenerated={isMenuNewlyGenerated}
       />
     );
   }
