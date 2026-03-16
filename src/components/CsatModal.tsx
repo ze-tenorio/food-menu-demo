@@ -79,7 +79,7 @@ const CsatModal: React.FC<CsatModalProps> = ({
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-[90%] max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in duration-300">
         {/* Header gradient */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 pb-8">
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 pb-8">
           <button 
             onClick={handleClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
@@ -161,7 +161,7 @@ const CsatModal: React.FC<CsatModalProps> = ({
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="O que você achou do seu menu alimentar? Alguma sugestão de melhoria?"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-gray-700 placeholder-gray-400"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-gray-700 placeholder-gray-400"
                 rows={3}
                 disabled={isSubmitting}
               />
@@ -174,7 +174,7 @@ const CsatModal: React.FC<CsatModalProps> = ({
               className={`w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 ${
                 rating === 0 || isSubmitting
                   ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
               }`}
             >
               {isSubmitting ? (

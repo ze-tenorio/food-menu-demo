@@ -46,7 +46,7 @@ const MenusListScreen: React.FC<MenusListScreenProps> = ({
       case 'muscle_gain':
         return 'text-blue-600';
       default:
-        return 'text-green-600';
+        return 'text-orange-600';
     }
   };
 

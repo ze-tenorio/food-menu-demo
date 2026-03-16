@@ -492,9 +492,9 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
           {/* Nutritionist Info - sempre exibir */}
           {hasApiData && (
           <div className="mb-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-5">
               <p className="text-gray-700 text-sm leading-relaxed text-center">
-                A partir do plano <strong>TP3</strong> é possível fazer um acompanhamento com um profissional de nutrição da <strong>Starbem</strong> para te ajudar a alcançar seus objetivos de forma personalizada e eficaz.*
+                Faça um acompanhamento com um profissional de nutrição da <strong>Starbem</strong> para te ajudar a alcançar seus objetivos de forma personalizada e eficaz.*
               </p>
             </div>
             <p className="text-gray-400 text-[10px] leading-tight mt-2 text-center px-2">

@@ -124,19 +124,10 @@ const CpfEntryScreen: React.FC<CpfEntryScreenProps> = ({ onClose, onSubmit }) =>
         <div className="mb-8 mt-4">
           <div className="flex flex-col items-center justify-center">
             <img 
-              src="/logo-totalpass-new.png" 
-              alt="TotalPass Logo"
-              className="w-48 h-auto object-contain mb-3"
+              src="/logo-starbem.png" 
+              alt="Starbem Logo"
+              className="w-48 h-auto object-contain"
             />
-            {/* Powered by Starbem */}
-            <div className="flex items-center justify-center opacity-50">
-              <span className="text-gray-500 text-xs mr-2">powered by</span>
-              <img 
-                src="/logo-starbem.png" 
-                alt="Starbem"
-                className="h-4 object-contain"
-              />
-            </div>
           </div>
         </div>
 
@@ -176,8 +167,8 @@ const CpfEntryScreen: React.FC<CpfEntryScreenProps> = ({ onClose, onSubmit }) =>
         </div>
 
         {/* Info Card */}
-        <div className="w-full max-w-md mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-800 text-sm">
+        <div className="w-full max-w-md mt-8 bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <p className="text-orange-800 text-sm">
             <strong>Dica:</strong> Você pode acessar seus menus anteriores ou criar um novo plano personalizado.
           </p>
         </div>

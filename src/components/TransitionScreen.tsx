@@ -34,12 +34,12 @@ const TransitionScreen: React.FC<TransitionScreenProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
-      {/* Logo TotalPass */}
+      {/* Logo Starbem */}
       <div className="mb-8">
         <div className="flex items-center justify-center">
           <img 
-            src="/logo-totalpass-new.png" 
-            alt="TotalPass Logo"
+            src="/logo-starbem.png" 
+            alt="Starbem Logo"
             className="w-48 h-48 object-contain"
           />
         </div>
@@ -59,9 +59,9 @@ const TransitionScreen: React.FC<TransitionScreenProps> = ({
             style={{
               width: `${progress}%`,
               background: `linear-gradient(90deg, 
-                hsl(142, 75%, 60%) 0%, 
-                hsl(142, 75%, 50%) 50%, 
-                hsl(142, 75%, 40%) 100%)`
+                hsl(24, 90%, 60%) 0%, 
+                hsl(18, 88%, 55%) 50%, 
+                hsl(12, 85%, 48%) 100%)`
             }}
           />
         </div>

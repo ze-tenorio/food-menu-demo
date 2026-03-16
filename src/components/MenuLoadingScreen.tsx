@@ -94,9 +94,9 @@ const MenuLoadingScreen: React.FC<MenuLoadingScreenProps> = ({ onComplete, onBac
 
         {/* Tips */}
         <div className="w-full max-w-md">
-          <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-start">
-              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
+              <Lightbulb className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
               <p className="text-gray-700 text-sm">
                 {tips[currentTip]}
               </p>

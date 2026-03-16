@@ -21,23 +21,14 @@ const MenuAlimentarScreen: React.FC<MenuAlimentarScreenProps> = ({
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center px-6 py-8 pb-12">
-        {/* TotalPass Logo */}
+        {/* Starbem Logo */}
         <div className="mb-8 mt-8">
           <div className="flex flex-col items-center justify-center">
             <img 
-              src="/logo-totalpass-new.png" 
-              alt="TotalPass Logo"
-              className="w-64 h-auto object-contain mb-3"
+              src="/logo-starbem.png" 
+              alt="Starbem Logo"
+              className="w-64 h-auto object-contain"
             />
-            {/* Powered by Starbem */}
-            <div className="flex items-center justify-center opacity-50">
-              <span className="text-gray-500 text-xs mr-2">powered by</span>
-              <img 
-                src="/logo-starbem.png" 
-                alt="Starbem"
-                className="h-4 object-contain"
-              />
-            </div>
           </div>
         </div>
 
