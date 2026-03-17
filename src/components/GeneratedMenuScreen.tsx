@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { MenuPlan } from '../services/menuApi';
+import { ArrowLeft, Download, Smartphone } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import jsPDF from 'jspdf';
+import { MenuPlan, Meal } from '../services/menuApi';
 import CsatModal from './CsatModal';
 import { submitCsatEvaluation, isPlanEvaluated } from '../services/csatApi';
 
@@ -123,6 +125,186 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
     
     await submitCsatEvaluation(planId, rating, feedback, patientId);
   };
+
+  const handleDownloadPdf = () => {
+    if (!apiMenuData) return;
+
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    const PRIMARY_RGB: [number, number, number] = [232, 100, 40];
+    const DARK: [number, number, number] = [31, 41, 55];
+    const GRAY: [number, number, number] = [107, 114, 128];
+    const LIGHT_BG: [number, number, number] = [249, 250, 251];
+
+    const sanitize = (text: string): string => {
+      return text
+        .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\u{2702}-\u{27B0}]/gu, '')
+        .replace(/[\u2018\u2019\u201A\u0060]/g, "'")
+        .replace(/[\u201C\u201D\u201E]/g, '"')
+        .replace(/[\u2013\u2014]/g, '-')
+        .replace(/\u2026/g, '...')
+        .replace(/\u2022/g, '-')
+        .replace(/\|'/g, ' -> ')
+        .replace(/\|/g, ' / ')
+        .replace(/[^\x00-\xFF]/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    };
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+
+    const drawWrappedText = (
+      text: string,
+      x: number,
+      maxWidth: number,
+      fontSize: number,
+      color: [number, number, number],
+      style: 'normal' | 'bold' = 'normal',
+      lineHeight = 5
+    ): number => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', style);
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(text, maxWidth) as string[];
+      for (const line of lines) {
+        ensureSpace(lineHeight);
+        doc.text(line, x, y);
+        y += lineHeight;
+      }
+      return lines.length;
+    };
+
+    // ── Header bar ──
+    doc.setFillColor(...PRIMARY_RGB);
+    doc.rect(0, 0, pageWidth, 20, 'F');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('Starbem  ·  Menu Alimentar', pageWidth / 2, 13, { align: 'center' });
+    y = 30;
+
+    // ── Patient & objective ──
+    const patientName = apiMenuData.nutritional_guidelines_detailed?.patient_name;
+    const displayObjective = objective || apiMenuData.nutritional_guidelines_detailed?.objective || '';
+
+    if (patientName) {
+      drawWrappedText(`Paciente: ${sanitize(patientName)}`, margin, contentWidth, 11, DARK, 'bold');
+      y += 1;
+    }
+    if (displayObjective) {
+      drawWrappedText(`Objetivo: ${sanitize(displayObjective)}`, margin, contentWidth, 10, GRAY);
+      y += 2;
+    }
+
+    // ── Macros ──
+    if (apiMenuData.macros) {
+      ensureSpace(20);
+      doc.setFillColor(...LIGHT_BG);
+      doc.roundedRect(margin, y, contentWidth, 16, 2, 2, 'F');
+      y += 5;
+      const colW = contentWidth / 4;
+      const labels = ['Calorias', 'Proteínas', 'Carboidratos', 'Gorduras'];
+      const values = [
+        `${apiMenuData.daily_energy_kcal} kcal`,
+        `${apiMenuData.macros.protein_g.toFixed(1)}g`,
+        `${apiMenuData.macros.carbs_g.toFixed(1)}g`,
+        `${apiMenuData.macros.fat_g.toFixed(1)}g`,
+      ];
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...GRAY);
+      labels.forEach((l, i) => doc.text(l, margin + colW * i + colW / 2, y, { align: 'center' }));
+      y += 4;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...DARK);
+      values.forEach((v, i) => doc.text(v, margin + colW * i + colW / 2, y, { align: 'center' }));
+      y += 10;
+    }
+
+    // ── Guidelines ──
+    if (apiMenuData.nutritional_guidelines_detailed) {
+      const g = apiMenuData.nutritional_guidelines_detailed;
+      if (g.fluids) {
+        drawWrappedText(`Hidratação: ${sanitize(g.fluids)}`, margin, contentWidth, 9, GRAY);
+      }
+      if (g.supplements) {
+        drawWrappedText(`Suplementos: ${sanitize(g.supplements)}`, margin, contentWidth, 9, GRAY);
+      }
+      y += 3;
+    }
+
+    // ── Meals ──
+    const sortedMeals = (Array.isArray(apiMenuData.meals)
+      ? apiMenuData.meals
+      : Object.values(apiMenuData.meals).filter(Boolean) as Meal[]
+    ).sort((a, b) => getMealOrder(a) - getMealOrder(b));
+
+    for (const meal of sortedMeals) {
+      ensureSpace(14);
+      doc.setFillColor(...PRIMARY_RGB);
+      doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(sanitize(`${meal.name}  —  ${meal.target_kcal} kcal`), margin + 4, y + 5.5);
+      y += 12;
+
+      if (!meal.items) continue;
+
+      for (const item of meal.items) {
+        ensureSpace(12);
+        drawWrappedText(sanitize(item.name), margin + 2, contentWidth - 4, 10, DARK, 'bold', 5);
+        y += 1;
+
+        if (item.description) {
+          drawWrappedText(sanitize(item.description), margin + 2, contentWidth - 4, 8.5, GRAY, 'normal', 4);
+          y += 1;
+        }
+        if (item.portion) {
+          drawWrappedText(`Porção: ${sanitize(item.portion)}`, margin + 2, contentWidth - 4, 8, DARK, 'normal', 4);
+        }
+        if (item.alternatives && item.alternatives.length > 0) {
+          drawWrappedText('Substituições:', margin + 2, contentWidth - 4, 8, GRAY, 'bold', 4);
+          for (const alt of item.alternatives) {
+            drawWrappedText(`  - ${sanitize(alt)}`, margin + 2, contentWidth - 6, 8, GRAY, 'normal', 4);
+          }
+        }
+        if (item.notes) {
+          drawWrappedText(sanitize(item.notes), margin + 2, contentWidth - 4, 8, GRAY, 'normal', 4);
+        }
+        y += 3;
+      }
+      y += 2;
+    }
+
+    // ── Footer ──
+    ensureSpace(12);
+    doc.setDrawColor(...PRIMARY_RGB);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    doc.text('Gerado por Starbem · Este documento não substitui orientação profissional.', pageWidth / 2, y, { align: 'center' });
+
+    const fileName = patientName
+      ? `menu-alimentar-${patientName.toLowerCase().replace(/\s+/g, '-')}.pdf`
+      : 'menu-alimentar.pdf';
+    doc.save(fileName);
+  };
+
   // Função para obter a ordem de uma refeição
   const getMealOrder = (meal: any): number => {
     // Pega type ou name e converte para lowercase, remove acentos
@@ -398,14 +580,24 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
 
       {/* Fixed Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        {/* Title and Objective */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Menu Alimentar</h2>
-          <p className="text-gray-600">Objetivo: {objective || defaultMenuData.objective}</p>
-          {apiMenuData?.nutritional_guidelines_detailed?.patient_name && (
-            <p className="text-gray-500 text-sm mt-1">
-              Paciente: {apiMenuData.nutritional_guidelines_detailed.patient_name}
-            </p>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Menu Alimentar</h2>
+            <p className="text-gray-600">Objetivo: {objective || defaultMenuData.objective}</p>
+            {apiMenuData?.nutritional_guidelines_detailed?.patient_name && (
+              <p className="text-gray-500 text-sm mt-1">
+                Paciente: {apiMenuData.nutritional_guidelines_detailed.patient_name}
+              </p>
+            )}
+          </div>
+          {hasApiData && (
+            <button
+              onClick={handleDownloadPdf}
+              className="ml-4 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors shrink-0"
+            >
+              <Download size={18} />
+              Baixar PDF
+            </button>
           )}
         </div>
       </div>
@@ -489,6 +681,28 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
           
           {/* Fechar bloco de dados de exemplo */}
 
+          {/* QR Code para acesso no celular */}
+          {hasApiData && isNewlyGenerated && apiMenuData?.plan_id && (
+          <div className="mb-6">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 flex flex-col items-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-1">Acesse no seu celular</h3>
+              <p className="text-gray-500 text-sm text-center mb-4">
+                Escaneie o QR code abaixo para abrir este menu no seu celular e baixar o PDF
+              </p>
+              <div className="bg-white p-3 rounded-lg shadow-sm">
+                <QRCodeSVG
+                  value={`https://starbem-menuai-demo.vercel.app/?cpf=${sessionStorage.getItem('userCpf') || ''}&plan=${apiMenuData.plan_id}`}
+                  size={180}
+                  level="M"
+                />
+              </div>
+            </div>
+          </div>
+          )}
+
           {/* Nutritionist Info - sempre exibir */}
           {hasApiData && (
           <div className="mb-6">
@@ -505,13 +719,7 @@ const GeneratedMenuScreen: React.FC<GeneratedMenuScreenProps> = ({
         </div>
       </div>
 
-      {/* CSAT Modal */}
-      <CsatModal
-        isOpen={showCsatModal}
-        onClose={handleCsatClose}
-        onSubmit={handleCsatSubmit}
-        planId={apiMenuData?.plan_id}
-      />
+      {/* CSAT Modal - desabilitado na demo */}
     </div>
   );
 };

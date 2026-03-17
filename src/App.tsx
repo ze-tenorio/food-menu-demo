@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TransitionScreen from "./components/TransitionScreen";
 import MenuAlimentarScreen from "./components/MenuAlimentarScreen";
 import MenuAlimentarForm from "./components/MenuAlimentarForm";
@@ -42,6 +42,41 @@ const App = () => {
   const [formData, setFormData] = useState<any>(null);
   const [currentMenu, setCurrentMenu] = useState<MenuPlan | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [deepLinkLoading, setDeepLinkLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cpfParam = params.get('cpf');
+    const planParam = params.get('plan');
+
+    if (cpfParam && planParam) {
+      window.history.replaceState({}, '', window.location.pathname);
+
+      try { sessionStorage.setItem('userCpf', cpfParam); } catch {}
+      setUserCpf(cpfParam);
+
+      setShowTransition(false);
+      setDeepLinkLoading(true);
+      setLoadingType('loading-history');
+      setShowMenuLoading(true);
+
+      getMenuDetail(cpfParam, planParam).then((result) => {
+        setDeepLinkLoading(false);
+        if (result.success && result.plan) {
+          const planObjective = result.plan.nutritional_guidelines_detailed?.objective ||
+                                (result.plan as any).objective || 'manutencao';
+          setFormData({ nutritional_plan_goals: { primary_objective: planObjective } });
+          setCurrentMenu(result.plan);
+          setShowMenuLoading(false);
+          setIsMenuNewlyGenerated(false);
+          setShowGeneratedMenu(true);
+        } else {
+          setShowMenuLoading(false);
+          setShowMenuAlimentar(true);
+        }
+      });
+    }
+  }, []);
 
   const handleTransitionComplete = () => {
     setShowTransition(false);
