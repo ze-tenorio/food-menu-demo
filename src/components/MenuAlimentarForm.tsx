@@ -223,7 +223,7 @@ const MenuAlimentarForm: React.FC<MenuAlimentarFormProps> = ({ onClose, onComple
     return {
       request_metadata: {
         patient_id: data.cpf.replace(/\D/g, ''), // Remove formatação do CPF
-        provider_id: "188b33d8-a493-4753-b8dd-5f05fa6495b0",
+        provider_id: "hr4results",
         request_type: "plan_builder"
       },
       patient_profile: {
